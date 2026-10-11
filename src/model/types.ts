@@ -42,6 +42,8 @@ export interface TransitCorridor extends CorridorBase {
   headway: { peak: number; offPeak: number }
   /** Service hours as decimal hours, e.g. [5.5, 22]. */
   hours: readonly [number, number]
+  /** The OSM ferry way the boat follows, for ferries. */
+  osmWay?: number
   /** Which OSM railway tag to trace along, for rail lines. */
   rail?: 'subway' | 'rail'
   /** Fixed departure times from the first stop, for ferries. Decimal hours. */
