@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import type { MapData } from '../data/schema'
 import type { Corridor, Mode, Reading } from '../model/types'
 import { project, type Point } from '../geo/project'
@@ -48,6 +48,9 @@ const WATER_LABELS: { name: string; at: Point; rank: 1 | 2 }[] = [
   { name: 'Badagry Creek', at: project(3.25, 6.432), rank: 2 },
 ]
 
+const START_VIEW: View = { x: 0, y: 0, zoom: 40 }
+const START_SIZE: Size = { width: 1, height: 1 }
+
 /** Rank 1 labels always; finer ones as you zoom in. */
 const minZoomForRank = { 1: 0, 2: 34, 3: 70 } as const
 
@@ -56,17 +59,19 @@ export function MapView(props: Props) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const sceneRef = useRef<MapScene | null>(null)
-  const sizeRef = useRef<Size>({ width: 1, height: 1 })
-  const viewRef = useRef<View>({ x: 0, y: 0, zoom: 40 })
+  const sizeRef = useRef<Size>(START_SIZE)
+  const viewRef = useRef<View>(START_VIEW)
   const dirty = useRef(true)
-  const [view, setView] = useState<View>(viewRef.current)
-  const [size, setSize] = useState<Size>(sizeRef.current)
+  const [view, setView] = useState<View>(START_VIEW)
+  const [size, setSize] = useState<Size>(START_SIZE)
   const [ready, setReady] = useState(false)
   // Some GPUs hand out a WebGPU device and then lose it straight away; fall back to WebGL 2 once.
   const [fallback, setFallback] = useState(false)
 
   const latest = useRef({ readings, motion, onStatus })
-  latest.current = { readings, motion, onStatus }
+  useLayoutEffect(() => {
+    latest.current = { readings, motion, onStatus }
+  })
 
   const lengths = useMemo(() => Object.fromEntries(corridors.map((c) => [c.id, data.corridors[c.id]?.length ?? 1])), [corridors, data])
   const bounds: Bounds = useMemo(() => {
@@ -92,7 +97,9 @@ export function MapView(props: Props) {
   )
 
   const insetRef = useRef(inset)
-  insetRef.current = inset
+  useLayoutEffect(() => {
+    insetRef.current = inset
+  })
   const home = useCallback(() => applyView(fit(HOME, sizeRef.current, insetRef.current)), [applyView])
 
   /* Renderer lifetime */
@@ -159,14 +166,16 @@ export function MapView(props: Props) {
     const out = new Float32Array(corridors.length * 2)
     corridors.forEach((c, i) => {
       const on = layers[c.mode]
-      const b = !on ? 0 : !selected ? 1 : c.id === selected ? 1.15 : 0.45
+      const b = !on ? 0 : !selected ? 1 : c.id === selected ? 1 : 0.4
       out[i * 2] = b
       out[i * 2 + 1] = b
     })
     return out
   }, [corridors, layers, selected])
   const brightRef = useRef(brightness)
-  brightRef.current = brightness
+  useLayoutEffect(() => {
+    brightRef.current = brightness
+  }, [brightness])
 
   useEffect(() => {
     sceneRef.current?.setLines(corridors.map((c) => ({ visible: layers[c.mode], selected: c.id === selected, dimmed: !!selected && c.id !== selected })))
@@ -305,7 +314,10 @@ export function MapView(props: Props) {
     if (!selectedCorridor || !selectedReading || !layers[selectedCorridor.mode]) return null
     const at = toScreen(view, size, midpoint(data.corridors[selectedCorridor.id]?.line ?? []))
     if (at[0] < 0 || at[1] < 0 || at[0] > size.width || at[1] > size.height) return null
-    const flip = at[0] + 300 > size.width - inset.right
+    // Text to the right if it fits, else to the left, else (narrow phones) underneath.
+    const roomRight = size.width - inset.right - at[0]
+    const place: 'right' | 'left' | 'below' = roomRight > 300 ? 'right' : at[0] - inset.left > 300 ? 'left' : 'below'
+    const shift = place === 'below' ? Math.min(size.width - 250, Math.max(10, at[0] - 110)) - at[0] : 0
     let title = selectedCorridor.name
     let detail: string
     if (selectedCorridor.mode === 'road') {
@@ -314,8 +326,8 @@ export function MapView(props: Props) {
       detail = `${formatSpeed(selectedReading.speed)} · ${selectedReading.volume.toLocaleString('en-NG')} vehicles / 10 min`
     } else if (selectedReading.headway == null) detail = 'Not running now'
     else detail = `${formatSpeed(selectedReading.speed)} · every ${selectedReading.headway} min`
-    return { at, flip, title, detail }
-  }, [selectedCorridor, selectedReading, layers, view, size, data, inset.right])
+    return { at, place, shift, title, detail }
+  }, [selectedCorridor, selectedReading, layers, view, size, data, inset.right, inset.left])
 
   const bar = scaleBar(view.zoom)
 
@@ -354,10 +366,10 @@ export function MapView(props: Props) {
           )
         })}
         {callout && (
-          <div className={`callout${callout.flip ? ' flip' : ''}`} style={{ transform: `translate(${callout.at[0]}px, ${callout.at[1]}px)` }}>
+          <div className={`callout ${callout.place}`} style={{ transform: `translate(${callout.at[0]}px, ${callout.at[1]}px)` }}>
             <span className="callout-dot" />
             <span className="callout-line" />
-            <span className="callout-text mono">
+            <span className="callout-text mono" style={callout.place === 'below' ? { left: callout.shift } : undefined}>
               <b>{callout.title}</b>
               <span>{callout.detail}</span>
             </span>

@@ -237,10 +237,13 @@ export async function createMapScene(canvas: HTMLCanvasElement, data: MapData, c
   const along = normalize(p1.sub(p0).add(vec2(1e-6, 0)))
   // Drive on the right: each direction sits on the right-hand side of its own travel.
   const right = vec2(along.y, along.x.negate()).mul(float(1).sub(dir.mul(2)))
-  const on = step(info.w, state.y).mul(state.z)
+  const shown = step(info.w, state.y).mul(step(0.001, state.z))
+  // Brightness fades the dot; a packed road also fades each dot a little, so a
+  // jam reads as dense amber rather than burning out to white.
+  const on = shown.mul(state.z).mul(float(1).sub(state.y.mul(0.55)))
   const centre = mix(p0, p1, f).add(right.mul(shapeAttr.x).mul(kmPerPx))
   const dotSize = uniform(1)
-  const corner = positionGeometry.xy.mul(shapeAttr.y.mul(dotSize).mul(on).mul(kmPerPx).mul(2.2))
+  const corner = positionGeometry.xy.mul(shapeAttr.y.mul(dotSize).mul(shown).mul(kmPerPx).mul(1.6))
 
   const particleMat = track(new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }))
   particleMat.positionNode = vec3(centre.add(corner), 0.1)

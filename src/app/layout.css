@@ -1,0 +1,126 @@
+.app {
+  position: fixed;
+  inset: 0;
+}
+
+.stage,
+.map-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.notices {
+  position: absolute;
+  left: 50%;
+  top: 24px;
+  transform: translateX(-50%);
+  display: grid;
+  gap: 8px;
+  width: min(440px, calc(100vw - 32px));
+  z-index: 5;
+}
+
+/* ------- Wide screens: panels float over the map, as in the mockup ------- */
+
+.is-wide .left-col {
+  position: absolute;
+  left: 28px;
+  top: 24px;
+  width: 330px;
+  display: grid;
+  gap: 10px;
+  z-index: 3;
+}
+
+.is-wide .side {
+  position: absolute;
+  right: 24px;
+  top: 24px;
+  width: 350px;
+  max-height: calc(100% - 240px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  z-index: 3;
+}
+
+.is-wide .inset {
+  position: absolute;
+  left: 28px;
+  bottom: 24px;
+  width: 260px;
+  max-height: calc(100% - 330px);
+  overflow: auto;
+  z-index: 3;
+}
+
+.is-wide .time-wrap {
+  position: absolute;
+  bottom: 24px;
+  left: 28px;
+  right: 24px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.is-wide .time-wrap.beside-inset {
+  left: 312px;
+}
+
+.is-wide .time-wrap > * {
+  pointer-events: auto;
+  width: min(860px, 100%);
+}
+
+.is-wide .table-view {
+  position: absolute;
+  left: 382px;
+  right: 398px;
+  top: 24px;
+  bottom: 210px;
+  z-index: 4;
+}
+
+@media (max-width: 1180px) {
+  .is-wide .left-col {
+    width: 290px;
+  }
+  .is-wide .side {
+    width: 300px;
+  }
+  .is-wide .inset {
+    width: 230px;
+  }
+  .is-wide .time-wrap.beside-inset {
+    left: 280px;
+  }
+  .is-wide .table-view {
+    left: 24px;
+    right: 348px;
+    top: 260px;
+  }
+}
+
+/* ------- Phones: a title bar, the map, and a sheet ------- */
+
+.is-phone .title.compact {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  z-index: 4;
+}
+
+.is-phone .notices {
+  top: 120px;
+}
+
+.is-phone .table-view {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: calc(100px + env(safe-area-inset-top, 0px));
+  bottom: 230px;
+  z-index: 3;
+}

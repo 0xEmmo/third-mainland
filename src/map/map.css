@@ -109,15 +109,28 @@
   color: var(--road-soft);
 }
 
-.callout.flip .callout-line {
+.callout.left .callout-line {
   left: auto;
   right: 14px;
 }
 
-.callout.flip .callout-text {
+.callout.left .callout-text {
   left: auto;
   right: 92px;
   text-align: right;
+}
+
+.callout.below .callout-line {
+  left: 0;
+  top: 14px;
+  width: 1px;
+  height: 22px;
+}
+
+.callout.below .callout-text {
+  top: 40px;
+  width: 240px;
+  white-space: normal;
 }
 
 .map-controls {
