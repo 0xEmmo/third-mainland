@@ -36,10 +36,13 @@ const queries: Record<string, string> = {
   corridors: `way[highway][name~"^(${corridorNames.join('|')})$",i](${BBOX});out geom;`,
   streets: `way[highway~"^(motorway|trunk|primary|secondary|motorway_link|trunk_link)$"](${BBOX});out geom;`,
   rail: `way[railway~"^(light_rail|rail|subway|construction)$"](${BBOX});out geom;`,
-  railRoutes: `relation[route~"^(light_rail|train|subway)$"](${BBOX});out geom;`,
-  ferry: `(way[route=ferry](${BBOX});relation[route=ferry](${BBOX}););out geom;`,
-  brt: `(relation[route=bus][name~"BRT",i](${BBOX});way[highway=busway](${BBOX});way[busway~"lane|track"](${BBOX}););out geom;`,
-  water: `(relation[natural=water](${BBOX});way[natural=water][water~"lagoon|river"](${BBOX});way[natural=coastline](${BBOX}););out geom(${BBOX});`,
+  railRoutes: `relation[route~"^(light_rail|train|subway)$"](${BBOX});out tags;`,
+  ferry: `way[route=ferry](${BBOX});out geom;`,
+  brt: `(relation[route=bus][name~"BRT",i](${BBOX});way[highway=busway](${BBOX});way[busway~"lane|track"](${BBOX}););out geom(${BBOX});`,
+  coast: `way[natural=coastline](${BBOX});out geom;`,
+  water: `(relation[natural=water][name~"lagoon|harbour|creek",i](${BBOX});way[natural=water][name~"lagoon|creek",i](${BBOX}););out geom;`,
+  // The harbour and channels round Lagos Island are separate, mostly unnamed, water areas.
+  harbour: `(way[natural=water](6.405,3.33,6.48,3.45);relation[natural=water](6.405,3.33,6.48,3.45);way[natural=bay](6.405,3.33,6.48,3.45););out geom;`,
   places: `node[place~"^(city|town|suburb|neighbourhood|quarter|island)$"](${BBOX});out;`,
   stops: `(node[amenity=ferry_terminal](${BBOX});node[railway=station](${BBOX});node[public_transport=station](${BBOX}););out;`,
 }
