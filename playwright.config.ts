@@ -5,6 +5,10 @@ const port = 4174
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
+  // The map renders on a software GPU in CI, so give each test room and don't oversubscribe the CPU.
+  workers: process.env.CI ? 2 : 4,
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
