@@ -1,0 +1,29 @@
+:root {
+  --bg: #070b10;
+  --land: #101922;
+  --water: #03060b;
+  --line: #1b2733;
+  --edge: #1e2a36;
+  --edge-strong: #33424f;
+  --panel: rgb(9 14 20 / 0.88);
+  --panel-solid: #0b1118;
+  --raised: #111b25;
+  --txt: #d9e2ea;
+  --soft: #a9b6c2;
+  --mute: #8794a1;
+  --road: #ffb547;
+  --road-soft: #ffd58f;
+  --brt: #ff5b4a;
+  --ferry: #3fd4ff;
+  --rail: #7cf0b5;
+  --warn: #ff8a6b;
+
+  --sans: 'Geist Variable', 'Geist', system-ui, sans-serif;
+  --mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, monospace;
+  --serif: 'Instrument Serif', Georgia, serif;
+
+  --radius: 10px;
+  --gap: 16px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
