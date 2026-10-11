@@ -9,3 +9,4 @@ blob-report
 .DS_Store
 .vercel
 data/raw
+.scratch
