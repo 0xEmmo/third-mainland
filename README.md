@@ -5,7 +5,7 @@ real roads, BRT lanes, rail lines and ferry routes, thickening into amber jams o
 07:40 and thinning out to a trickle at midnight. Scrub the day, switch to a Saturday or a rain day, and every
 corridor's speed, journey time and timetable updates with it.
 
-**Live:** _coming soon_ · Built by [Emmanuel Balogun](https://github.com/0xEmmo)
+**Live:** [third-mainland.vercel.app](https://third-mainland.vercel.app) · Built by [Emmanuel Balogun](https://github.com/0xEmmo)
 
 ![Third Mainland at the morning peak on desktop](docs/desktop-peak.png)
 
