@@ -7,7 +7,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { CORRIDORS } from '../src/model/corridors.ts'
 import type { Corridor } from '../src/model/types.ts'
 import { Graph } from '../src/geo/graph.ts'
-import { length, removeSpurs, simplify } from '../src/geo/polyline.ts'
+import { distanceToLine, length, removeSpurs, simplify } from '../src/geo/polyline.ts'
 import { project, type Point } from '../src/geo/project.ts'
 import { assembleRings, pointInRing } from '../src/geo/rings.ts'
 import type { MapData } from '../src/data/schema.ts'
@@ -204,6 +204,79 @@ function tidy(polygons: Point[][][], tolerance: number) {
     .filter((rings) => rings.length > 0)
 }
 
+/* Labels and stops --------------------------------------------------- */
+
+/** Place names worth printing, by how far out they should still show. */
+const PLACE_RANK: Record<string, 1 | 2 | 3> = {
+  Ikeja: 1,
+  'Lagos Island': 1,
+  'Victoria Island': 1,
+  Ikoyi: 2,
+  Lekki: 2,
+  'Lekki Phase I': 2,
+  Ajah: 2,
+  Ikorodu: 1,
+  Yaba: 2,
+  Oshodi: 2,
+  Apapa: 2,
+  'Mile 2': 2,
+  Surulere: 2,
+  Oworonsoki: 3,
+  Oworonshoki: 3,
+  Maryland: 3,
+  Gbagada: 3,
+  Mushin: 3,
+  Ketu: 3,
+  Ojota: 3,
+  Festac: 3,
+  Agege: 3,
+  Badore: 3,
+  Obalende: 3,
+  Isolo: 3,
+  'Ojodu Berger': 3,
+}
+
+function places(): MapData['places'] {
+  const seen = new Set<string>()
+  const out: MapData['places'] = []
+  for (const e of load('places')) {
+    if (e.type !== 'node') continue
+    const name = e.tags?.name ?? ''
+    const rank = PLACE_RANK[name]
+    if (!rank || seen.has(name)) continue
+    // Prefer the town node over the island polygon centre for the same name.
+    if (e.tags?.place === 'island' && name !== 'Lagos Island') continue
+    seen.add(name)
+    const [x, y] = project(e.lon, e.lat)
+    out.push({ name: name === 'Lekki Phase I' ? 'Lekki' : name, x: round(x, 2), y: round(y, 2), rank })
+  }
+  return out
+}
+
+/** Named stations and terminals that sit on one of our transit lines. */
+function stops(): MapData['stops'] {
+  const out: MapData['stops'] = []
+  const seen = new Set<string>()
+  for (const e of load('stops')) {
+    if (e.type !== 'node' || !e.tags?.name) continue
+    const mode = e.tags.amenity === 'ferry_terminal' ? 'ferry' : e.tags.railway === 'station' ? 'rail' : null
+    if (!mode) continue
+    const p = project(e.lon, e.lat)
+    // Rail stations anywhere along a line; ferry terminals only at the ends of our routes.
+    const near = CORRIDORS.some((c) => {
+      if (c.mode !== mode) return false
+      const line = corridors[c.id]!.line
+      if (mode === 'rail') return distanceToLine(p, line) < 0.45
+      return [line[0]!, line[line.length - 1]!].some((q) => Math.hypot(q[0] - p[0], q[1] - p[1]) < 0.5)
+    })
+    const name = e.tags.name.replace(/ (Ferry Terminal|Station)$/, '')
+    if (!near || seen.has(name.toLowerCase()) || name === name.toLowerCase()) continue
+    seen.add(name.toLowerCase())
+    out.push({ name, x: round(p[0], 3), y: round(p[1], 3), mode })
+  }
+  return out
+}
+
 /* Everything together ------------------------------------------------- */
 
 const corridors: MapData['corridors'] = {}
@@ -226,8 +299,8 @@ const data: MapData = {
   corridors,
   streets,
   water: tidy([oceanPolygon(), ...waterPolygons()], 0.025),
-  places: [],
-  stops: [],
+  places: places(),
+  stops: stops(),
 }
 
 const out = new URL('../public/data/lagos.json', import.meta.url)
