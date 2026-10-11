@@ -15,6 +15,7 @@ export class Graph {
   readonly points: Point[] = []
   readonly edges: Edge[][] = []
   private ids = new Map<number, number>()
+  private incoming = new Set<number>()
 
   node(osmId: number, p: Point): number {
     let i = this.ids.get(osmId)
@@ -27,24 +28,36 @@ export class Graph {
     return i
   }
 
-  link(a: number, b: number, weight = 1) {
+  /** `oneway` follows OSM: 1 means a→b only, -1 means b→a only, 0 both ways. */
+  link(a: number, b: number, weight = 1, oneway: -1 | 0 | 1 = 0) {
     const cost = dist(this.points[a]!, this.points[b]!) * weight
-    this.edges[a]!.push({ to: b, cost })
-    this.edges[b]!.push({ to: a, cost })
+    if (oneway >= 0) this.edges[a]!.push({ to: b, cost })
+    if (oneway <= 0) this.edges[b]!.push({ to: a, cost })
+    this.incoming.add(oneway >= 0 ? b : a)
   }
 
   nearest(p: Point): number {
-    let best = -1
-    let bestD = Infinity
+    return this.nearestN(p, 1)[0] ?? -1
+  }
+
+  /** The n closest connected nodes, nearest first. */
+  nearestN(p: Point, n: number, filter?: (i: number) => boolean): number[] {
+    const scored: [number, number][] = []
     this.points.forEach((q, i) => {
-      if (this.edges[i]!.length === 0) return
-      const d = dist(p, q)
-      if (d < bestD) {
-        bestD = d
-        best = i
-      }
+      if (this.edges[i]!.length === 0 && !this.incoming.has(i)) return
+      if (filter && !filter(i)) return
+      scored.push([dist(p, q), i])
     })
-    return best
+    return scored
+      .sort((a, b) => a[0] - b[0])
+      .slice(0, n)
+      .map(([, i]) => i)
+  }
+
+  cost(path: readonly number[]): number {
+    let total = 0
+    for (let i = 1; i < path.length; i++) total += this.edges[path[i - 1]!]!.find((e) => e.to === path[i])?.cost ?? Infinity
+    return total
   }
 
   /** Dijkstra with a binary heap. Returns node indices, or null if unreachable. */

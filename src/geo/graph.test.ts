@@ -15,6 +15,20 @@ describe('graph', () => {
     expect(g.path(a, c)).toEqual([a, d, c])
   })
 
+  it('respects one-way links', () => {
+    const g = new Graph()
+    const a = g.node(1, [0, 0])
+    const b = g.node(2, [1, 0])
+    const c = g.node(3, [0, 1])
+    g.link(a, b, 1, 1)
+    g.link(b, c, 1, -1)
+    g.link(c, a)
+    expect(g.path(a, b)).toEqual([a, b])
+    expect(g.path(b, a)).toBeNull()
+    expect(g.path(c, b)).toEqual([c, b])
+    expect(g.path(b, c)).toBeNull()
+  })
+
   it('reuses nodes shared between ways and reports unreachable ends', () => {
     const g = new Graph()
     expect(g.node(7, [0, 0])).toBe(g.node(7, [9, 9]))

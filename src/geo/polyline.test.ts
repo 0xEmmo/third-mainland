@@ -1,4 +1,4 @@
-import { cumulative, distanceToLine, length, pointAt, resample, simplify } from './polyline'
+import { removeSpurs, cumulative, distanceToLine, length, pointAt, resample, simplify } from './polyline'
 import type { Point } from './project'
 
 const L: Point[] = [
@@ -49,5 +49,29 @@ describe('polyline', () => {
       [3, 4],
     ])
     expect(simplify(wobbly, 0.001)).toHaveLength(5)
+  })
+})
+
+describe('removeSpurs', () => {
+  it('cuts an out-and-back spur and a small loop', () => {
+    const spur: Point[] = [
+      [0, 0],
+      [1, 0],
+      [1, 0.5],
+      [1, 1],
+      [1, 0.5],
+      [1.001, 0],
+      [2, 0],
+    ]
+    expect(removeSpurs(spur, 0.01, 0.5)).toEqual([
+      [0, 0],
+      [1, 0],
+      [1.001, 0],
+      [2, 0],
+    ])
+  })
+
+  it('leaves a line that never doubles back alone', () => {
+    expect(removeSpurs(L, 0.01)).toEqual(L)
   })
 })

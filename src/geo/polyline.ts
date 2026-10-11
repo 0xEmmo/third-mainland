@@ -81,3 +81,27 @@ export function simplify(line: readonly Point[], tolerance: number): Point[] {
   }
   return line.filter((_, i) => keep[i])
 }
+
+/**
+ * Cuts out little out-and-back spurs and loops, the kind a shortest path picks
+ * up when it snaps onto the far carriageway or swings through a roundabout:
+ * if the line comes back within `tolerance` of a point it already passed after
+ * wandering at least `minDetour` away along the way, the wander is removed.
+ */
+export function removeSpurs(line: readonly Point[], tolerance: number, minDetour = tolerance * 4, lookahead = 80): Point[] {
+  const out: Point[] = []
+  let i = 0
+  while (i < line.length) {
+    const p = line[i]!
+    out.push(p)
+    let jump = -1
+    let travelled = 0
+    for (let j = i + 1; j < Math.min(line.length, i + lookahead); j++) {
+      travelled += dist(line[j - 1]!, line[j]!)
+      if (travelled > minDetour && dist(p, line[j]!) < tolerance) jump = j
+    }
+    i = jump > 0 ? jump + 1 : i + 1
+    if (jump > 0) out.push(line[jump]!)
+  }
+  return out
+}
