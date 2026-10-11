@@ -1,7 +1,7 @@
-import type { Mode, Scenario } from '../model/types'
+import type { Mode, Scenario, Sort } from '../model/types'
 import { wrapHour } from '../model/time'
 
-export type Sort = 'slowest' | 'busiest' | 'az'
+export type { Sort }
 export type Rate = 1 | 10
 
 export interface AppState {

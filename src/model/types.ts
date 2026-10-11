@@ -82,3 +82,5 @@ export interface DirectionReading {
   volume: number
   load: number
 }
+
+export type Sort = 'slowest' | 'busiest' | 'az'
