@@ -50,8 +50,8 @@ export const SCENARIOS: Record<Scenario, ScenarioFactors> = {
   },
   rain: {
     demand: 1.04,
-    capacity: 0.78,
-    freeFlow: 0.8,
+    capacity: 0.87,
+    freeFlow: 0.85,
     am: 1.05,
     pm: 1,
     midday: 1,
