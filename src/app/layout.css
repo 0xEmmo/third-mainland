@@ -37,7 +37,7 @@
   right: 24px;
   top: 24px;
   width: 350px;
-  max-height: calc(100% - 240px);
+  max-height: calc(100% - 250px);
   overflow: auto;
   overscroll-behavior: contain;
   z-index: 3;
@@ -89,12 +89,6 @@
   .is-wide .side {
     width: 300px;
   }
-  .is-wide .inset {
-    width: 230px;
-  }
-  .is-wide .time-wrap.beside-inset {
-    left: 280px;
-  }
   .is-wide .table-view {
     left: 24px;
     right: 348px;
@@ -121,6 +115,6 @@
   left: 8px;
   right: 8px;
   top: calc(100px + env(safe-area-inset-top, 0px));
-  bottom: 230px;
+  bottom: 300px;
   z-index: 3;
 }

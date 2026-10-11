@@ -189,7 +189,12 @@ function oceanPolygon(): Point[][] {
   if (!chain) return []
   const line = chain[0]![0] < chain[chain.length - 1]![0] ? chain : [...chain].reverse()
   const south = Math.min(...line.map((p) => p[1])) - 25
-  return [[...line, [line[line.length - 1]![0], south], [line[0]![0], south]]]
+  // Carry the coast on past the data's edges so panning never runs out of sea.
+  const first = line[0]!
+  const last = line[line.length - 1]!
+  const west: Point = [first[0] - 30, first[1]]
+  const east: Point = [last[0] + 30, last[1]]
+  return [[west, ...line, east, [east[0], south], [west[0], south]]]
 }
 
 const BOX = (() => {

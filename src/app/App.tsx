@@ -16,7 +16,7 @@ import { About } from '../ui/About'
 import { Notice } from '../ui/Notice'
 import { PhoneSheet, type SheetTab } from '../ui/PhoneSheet'
 import { UpdatePrompt } from './UpdatePrompt'
-import { useIsPhone, useOnline, useReducedMotion } from './hooks'
+import { useIsPhone, useMediaQuery, useOnline, useReducedMotion } from './hooks'
 import { initialState, reducer, restore, save } from './state'
 import { useClock } from './useClock'
 import './layout.css'
@@ -32,6 +32,8 @@ export function App() {
   const reduced = useReducedMotion()
   const phone = useIsPhone()
   const online = useOnline()
+  // Below this the floating details card would collide with the legend, so it moves into the side panel.
+  const roomy = useMediaQuery('(min-width: 1180px) and (min-height: 820px)')
   const [state, dispatch] = useReducer(reducer, reduced, (r) => restore(initialState(r), IDS))
   const [load, setLoad] = useState<Load>({ kind: 'loading' })
   const [mapStatus, setMapStatus] = useState<MapStatus>({ kind: 'loading' })
@@ -88,7 +90,7 @@ export function App() {
   const setLayer = (mode: Mode, on: boolean) => dispatch({ type: 'layer', mode, on })
   const showAll = () => (['road', 'brt', 'ferry', 'rail'] as Mode[]).forEach((m) => setLayer(m, true))
 
-  const inset = phone ? { top: 100, right: 0, bottom: 300, left: 0 } : { top: 20, right: 390, bottom: 170, left: 370 }
+  const inset = phone ? { top: 100, right: 0, bottom: 300, left: 0 } : { top: 20, right: roomy ? 390 : 340, bottom: 210, left: roomy ? 370 : 320 }
 
   const list = (
     <CorridorList
@@ -197,9 +199,12 @@ export function App() {
               {title}
               {layers}
             </div>
-            <aside className="side panel">{list}</aside>
-            {details && <div className="inset panel">{details}</div>}
-            <div className={`time-wrap${details ? ' beside-inset' : ''}`}>{timebar}</div>
+            <aside className="side panel">
+              {!roomy && details && <div className="side-details">{details}</div>}
+              {list}
+            </aside>
+            {roomy && details && <div className="inset panel">{details}</div>}
+            <div className={`time-wrap${roomy && details ? ' beside-inset' : ''}`}>{timebar}</div>
           </>
         )}
       </div>

@@ -186,6 +186,7 @@
 /* Corridor list */
 .routes-h {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
@@ -198,6 +199,7 @@
 }
 
 .routes-h h2 {
+  white-space: nowrap;
   font-size: 14px;
   font-weight: 600;
 }
@@ -212,6 +214,7 @@
 
 .segment {
   padding: 3px 8px;
+  white-space: nowrap;
   color: var(--mute);
 }
 
@@ -523,6 +526,7 @@
 
 .table-scroll tbody th {
   font-weight: 500;
+  min-width: 190px;
 }
 
 .table-scroll tbody th small {
@@ -761,4 +765,13 @@
 .is-phone .update {
   top: 120px;
   width: calc(100vw - 16px);
+}
+
+.side-details {
+  border-bottom: 1px solid var(--edge);
+}
+
+.side-details .details-media img,
+.side-details .sketch {
+  height: 110px;
 }
