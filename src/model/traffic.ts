@@ -176,7 +176,7 @@ export function readTransit(c: TransitCorridor, lengthKm: number, hour: number, 
 }
 
 /** Vehicle slots each transit line gets on the GPU, per direction. */
-export const MAX_VEHICLES = 24
+export const MAX_VEHICLES = 32
 
 export function read(c: Corridor, lengthKm: number, hour: number, scenario: Scenario): Reading {
   return c.mode === 'road' ? readRoad(c, lengthKm, hour, scenario) : readTransit(c, lengthKm, hour, scenario)
