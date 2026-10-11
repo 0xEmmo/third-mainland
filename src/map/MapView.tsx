@@ -67,6 +67,7 @@ export function MapView(props: Props) {
   const [ready, setReady] = useState(false)
   // Some GPUs hand out a WebGPU device and then lose it straight away; fall back to WebGL 2 once.
   const [fallback, setFallback] = useState(false)
+  const [retries, setRetries] = useState(0)
 
   const latest = useRef({ readings, motion, onStatus })
   useLayoutEffect(() => {
@@ -108,6 +109,7 @@ export function MapView(props: Props) {
     if (!canvas) return
     let cancelled = false
     let scene: MapScene | null = null
+    let retryTimer = 0
     latest.current.onStatus({ kind: 'loading' })
     createMapScene(canvas, data, corridors, { forceWebGL: forceWebGL || fallback, particles })
       .then((s) => {
@@ -130,15 +132,26 @@ export function MapView(props: Props) {
       .catch((err: unknown) => {
         if (cancelled) return
         console.error(err)
+        // WebGPU can be advertised and still fail to start; give WebGL 2 one go before giving up.
+        if (!forceWebGL && !fallback) {
+          setFallback(true)
+          return
+        }
+        // A crashed WebGPU attempt can take the GPU process down with it for a moment.
+        if (fallback && retries < 2) {
+          retryTimer = window.setTimeout(() => setRetries((n) => n + 1), 700)
+          return
+        }
         latest.current.onStatus({ kind: 'error', message: 'This browser could not start WebGPU or WebGL 2, so the map cannot be drawn here.' })
       })
     return () => {
       cancelled = true
+      window.clearTimeout(retryTimer)
       scene?.dispose()
       sceneRef.current = null
       setReady(false)
     }
-  }, [data, corridors, forceWebGL, particles, fallback])
+  }, [data, corridors, forceWebGL, particles, fallback, retries])
 
   /* Size */
   const fitted = useRef(false)
@@ -333,7 +346,8 @@ export function MapView(props: Props) {
 
   return (
     <div className="map" ref={wrapRef}>
-      <canvas ref={canvasRef} className="map-canvas" aria-hidden="true" />
+      {/* A canvas keeps whichever context it first handed out, so the fallback needs a fresh one. */}
+      <canvas key={fallback ? `webgl-${retries}` : 'auto'} ref={canvasRef} className="map-canvas" aria-hidden="true" />
       <div
         className="map-hit"
         role="application"
