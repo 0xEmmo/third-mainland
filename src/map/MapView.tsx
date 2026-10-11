@@ -365,6 +365,17 @@ export function MapView(props: Props) {
             </span>
           )
         })}
+        {view.zoom >= 30 &&
+          data.stops
+            .filter((st) => layers[st.mode])
+            .map((st) => {
+              const [x, y] = toScreen(view, size, [st.x, st.y])
+              return (
+                <span key={st.name} className={`map-stop ${st.mode}`} style={{ transform: `translate(${x}px, ${y}px)` }}>
+                  {view.zoom >= 80 && <span>{st.name}</span>}
+                </span>
+              )
+            })}
         {callout && (
           <div className={`callout ${callout.place}`} style={{ transform: `translate(${callout.at[0]}px, ${callout.at[1]}px)` }}>
             <span className="callout-dot" />

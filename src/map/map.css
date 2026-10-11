@@ -174,3 +174,29 @@
   justify-items: end;
   gap: 2px;
 }
+
+.map-stop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1.5px solid var(--ferry);
+}
+
+.map-stop.rail {
+  border-color: var(--rail);
+}
+
+.map-stop span {
+  position: absolute;
+  left: 10px;
+  top: -5px;
+  white-space: nowrap;
+  font: 500 10.5px var(--sans);
+  color: var(--soft);
+  text-shadow: 0 0 4px var(--land);
+}
