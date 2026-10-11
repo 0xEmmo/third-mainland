@@ -6,7 +6,6 @@ import {
   float,
   floor,
   fract,
-  instancedBufferAttribute,
   min,
   mix,
   normalize,
@@ -141,6 +140,7 @@ export async function createMapScene(canvas: HTMLCanvasElement, data: MapData, c
   /* Water */
   const waterMat = track(new THREE.MeshBasicNodeMaterial({ color: PALETTE.water }))
   const shoreMat = track(new THREE.LineBasicNodeMaterial({ color: PALETTE.shore, transparent: true, opacity: 0.85 }))
+  const shore: number[] = []
   for (const polygon of data.water) {
     const [outer, ...holes] = polygon
     if (!outer || outer.length < 3) continue
@@ -149,13 +149,13 @@ export async function createMapScene(canvas: HTMLCanvasElement, data: MapData, c
     const mesh = new THREE.Mesh(track(new THREE.ShapeGeometry(shape)), waterMat)
     mesh.renderOrder = 0
     scene.add(mesh)
-    for (const ring of polygon) {
-      const g = track(new THREE.BufferGeometry().setFromPoints(ring.map(([x, y]) => new THREE.Vector3(x, y, 0.01))))
-      const loop = new THREE.LineLoop(g, shoreMat)
-      loop.renderOrder = 1
-      scene.add(loop)
-    }
+    for (const ring of polygon) for (let i = 1; i < ring.length; i++) shore.push(ring[i - 1]![0], ring[i - 1]![1], 0.01, ring[i]![0], ring[i]![1], 0.01)
   }
+  const shoreGeo = track(new THREE.BufferGeometry())
+  shoreGeo.setAttribute('position', new THREE.Float32BufferAttribute(shore, 3))
+  const shoreLines = new THREE.LineSegments(shoreGeo, shoreMat)
+  shoreLines.renderOrder = 1
+  scene.add(shoreLines)
 
   /* Street mesh */
   const seg: number[] = []
@@ -215,9 +215,13 @@ export async function createMapScene(canvas: HTMLCanvasElement, data: MapData, c
   /* Particles */
   const lengths = Object.fromEntries(corridors.map((c) => [c.id, data.corridors[c.id]?.length ?? 1]))
   const buffers = buildParticles(corridors, lengths, options.particles ?? 40_000)
-  const info = instancedBufferAttribute(buffers.info, 'vec4') as unknown as Node<'vec4'>
-  const shapeAttr = instancedBufferAttribute(buffers.shape, 'vec4') as unknown as Node<'vec4'>
-  const tint = instancedBufferAttribute(buffers.color, 'vec3') as unknown as Node<'vec3'>
+  const particleGeo = track(new THREE.PlaneGeometry(1, 1))
+  particleGeo.setAttribute('info', new THREE.InstancedBufferAttribute(buffers.info, 4))
+  particleGeo.setAttribute('shape', new THREE.InstancedBufferAttribute(buffers.shape, 4))
+  particleGeo.setAttribute('tint', new THREE.InstancedBufferAttribute(buffers.color, 3))
+  const info = attribute('info', 'vec4') as unknown as Node<'vec4'>
+  const shapeAttr = attribute('shape', 'vec4') as unknown as Node<'vec4'>
+  const tint = attribute('tint', 'vec3') as unknown as Node<'vec3'>
 
   const row = info.x
   const dir = info.y
@@ -241,12 +245,14 @@ export async function createMapScene(canvas: HTMLCanvasElement, data: MapData, c
   const particleMat = track(new THREE.MeshBasicNodeMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }))
   particleMat.positionNode = vec3(centre.add(corner), 0.1)
   const r = uv().sub(0.5).length().mul(2)
-  const alpha = smoothstep(1, 0.15, r).mul(clamp(varying(on), 0, 1))
+  const alpha = float(1)
+    .sub(smoothstep(0.15, 1, r))
+    .mul(clamp(varying(on), 0, 1))
   particleMat.colorNode = vec4(varying(tint).mul(alpha), alpha)
 
-  const particleGeo = track(new THREE.PlaneGeometry(1, 1))
-  const particles = new THREE.Mesh(particleGeo, particleMat)
-  ;(particles as unknown as { count: number }).count = buffers.count
+  // InstancedMesh only for the instanced draw call; its matrices stay identity
+  // because every position is worked out in the vertex shader.
+  const particles = new THREE.InstancedMesh(particleGeo, particleMat, buffers.count)
   particles.frustumCulled = false
   particles.renderOrder = 5
   scene.add(particles)
