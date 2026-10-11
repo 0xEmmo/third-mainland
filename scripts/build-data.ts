@@ -9,7 +9,7 @@ import type { Corridor } from '../src/model/types.ts'
 import { Graph } from '../src/geo/graph.ts'
 import { distanceToLine, length, removeSpurs, simplify } from '../src/geo/polyline.ts'
 import { project, type Point } from '../src/geo/project.ts'
-import { assembleRings, pointInRing } from '../src/geo/rings.ts'
+import { assembleRings, pointInRing, signedArea } from '../src/geo/rings.ts'
 import type { MapData } from '../src/data/schema.ts'
 
 interface OsmWay {
@@ -157,11 +157,14 @@ const geom = (g: ({ lat: number; lon: number } | null)[] | undefined) =>
 function waterPolygons(): Point[][][] {
   const out: Point[][][] = []
   const seen = new Set<number>()
-  for (const e of load('water')) {
+  for (const e of [...load('water'), ...load('harbour')]) {
     if (seen.has(e.id)) continue
+    if (e.tags?.water === 'wastewater' || e.tags?.water === 'basin') continue
     seen.add(e.id)
     if (e.type === 'way' && e.geometry) {
-      out.push([geom(e.geometry)])
+      const ring = geom(e.geometry)
+      // Ponds and fish farms clutter the map without telling you anything.
+      if (Math.abs(signedArea(ring)) > 0.05) out.push([ring])
       continue
     }
     if (e.type !== 'relation') continue
