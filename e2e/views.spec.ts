@@ -62,3 +62,9 @@ test('works offline once loaded', async ({ page, context }) => {
   await expect(page.getByText(/Offline · saved copy/)).toBeVisible()
   await expect(page.getByText('WebGL 2', { exact: true })).toBeVisible({ timeout: 20_000 })
 })
+
+test('picks a renderer by itself, falling back to WebGL 2 when WebGPU fails', async ({ page }) => {
+  await page.goto('/?particles=2000')
+  await expect(page.getByText(/^(WebGPU|WebGL 2)$/)).toBeVisible({ timeout: 30_000 })
+  await expect(page.getByRole('alert')).toHaveCount(0)
+})
