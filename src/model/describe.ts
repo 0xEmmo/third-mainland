@@ -28,7 +28,8 @@ export function title(c: Corridor, r: Reading | undefined): string {
 }
 
 function shortDirection(d: string) {
-  return d.replace(/bound$/, '').replace(/^to the /, 'to ')
+  // "southbound" reads fine as "south"; "inbound" does not survive the same trim.
+  return /^(north|south|east|west)bound$/.test(d) ? d.replace(/bound$/, '') : d.replace(/^to the /, 'to ')
 }
 
 export function sortCorridors(corridors: readonly Corridor[], readings: readonly Reading[], sort: Sort): Corridor[] {
