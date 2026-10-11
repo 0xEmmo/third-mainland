@@ -71,6 +71,8 @@ test.describe('the map', () => {
   })
 
   test('layers hide corridors, down to an empty list', async ({ page }) => {
+    // Many clicks in a row: keep the software GPU from animating particles between them, or CI crawls.
+    await page.emulateMedia({ reducedMotion: 'reduce' })
     await open(page)
     for (const name of ['Road traffic', 'BRT', 'Ferry', 'Rail']) {
       await showLayers(page)
